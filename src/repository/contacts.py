@@ -6,12 +6,24 @@ from src.database.models import Contact
 from src.schemas import ContactModel
 
 
-async def get_contacts(skip: int, limit: int, db: Session):
-    return db.query(Contact).offset(skip).limit(limit).all()
-
-
 async def get_contact_by_id(contact_id: int, db: Session):
     return db.query(Contact).filter(Contact.id == contact_id).first()
+
+
+async def get_contacts(skip: int,
+                       limit: int,
+                       first_name: str,
+                       last_name: str,
+                       email: str,
+                       db: Session):
+    if first_name:
+        return db.query(Contact).filter(Contact.first_name == first_name).offset(skip).limit(limit).all()
+    if last_name:
+        return db.query(Contact).filter(Contact.last_name == last_name).offset(skip).limit(limit).all()
+    if email:
+        return db.query(Contact).filter(Contact.email == email).offset(skip).limit(limit).all()
+
+    return db.query(Contact).offset(skip).limit(limit).all()
 
 
 async def create_contact(body: ContactModel, db: Session):

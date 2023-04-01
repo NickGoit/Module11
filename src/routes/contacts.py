@@ -1,23 +1,30 @@
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.schemas import ContactModel, ContactResponse
 from src.repository import contacts as repository_contacts
 
-
 router = APIRouter(prefix='/contacts', tags=["contacts"])
 
 
-@router.get("/", response_model=List[ContactResponse])
-async def get_contacts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    contacts = await repository_contacts.get_contacts(skip, limit, db)
-    return contacts
+@router.get("/", response_model=list[ContactResponse], name='Get all contacts or Get by first_name, last_name, or email')
+async def get_contact_by_name(skip: int = 0, limit: int = Query(default=10, ge=1, le=50),
+                              first_name: Optional[str] = Query(default=None),
+                              last_name: Optional[str] = Query(default=None),
+                              email: Optional[str] = Query(default=None),
+                              db: Session = Depends(get_db)):
+    contact = await repository_contacts.get_contacts(skip, limit,
+                                                     first_name, last_name,
+                                                     email, db)
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+    return contact
 
 
-@router.get("/{contact_id}", response_model=ContactResponse)
+@router.get("/{contact_id}", response_model=ContactResponse, name='Get contact by ID')
 async def get_contact(contact_id: int, db: Session = Depends(get_db)):
     contact = await repository_contacts.get_contact_by_id(contact_id, db)
     if contact is None:
