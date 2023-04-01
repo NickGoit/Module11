@@ -1,15 +1,25 @@
-from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from datetime import datetime, date
+
+from pydantic import BaseModel, Field, EmailStr
 
 
 class ContactModel(BaseModel):
-    name: str = Field(max_length=25)
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone: str
+    date_of_birth: date
 
 
 class ContactResponse(BaseModel):
-    id: int
+    id: int = Field(ge=1)
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone: str
+    date_of_birth = date
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
-
