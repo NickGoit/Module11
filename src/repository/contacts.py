@@ -1,4 +1,5 @@
 from typing import List
+from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,32 @@ async def get_contacts(skip: int,
         return db.query(Contact).filter(Contact.email == email).offset(skip).limit(limit).all()
 
     return db.query(Contact).offset(skip).limit(limit).all()
+
+
+async def verify_email_phone(email: str, phone: str, db: Session):
+    email_data = db.query(Contact.email).filter(Contact.email == email).first()
+    if email_data:
+        return email_data
+
+    phone_data = db.query(Contact.phone).filter(Contact.phone == phone).first()
+    if phone_data:
+        return phone_data
+
+    return None
+
+
+async def get_contact_birthday(skip: int,
+                               limit: int, db: Session):
+    contacts_with_next_birth = []
+    today = date.today()
+    all_contacts = db.query(Contact).offset(skip).limit(limit).all()
+    for contact in all_contacts:
+        if contact.date_of_birth.month == today.month:
+            if 0 <= (contact.date_of_birth.day - today.day) <= 7:
+                contacts_with_next_birth.append(contact)
+        else:
+            continue
+    return contacts_with_next_birth
 
 
 async def create_contact(body: ContactModel, db: Session):
